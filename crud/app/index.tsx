@@ -1,62 +1,111 @@
-import React, { useState } from 'react';
-import { Text, View, Button, TextInput, ScrollView } from "react-native";
-import { createItem, getItems } from '@/lib/firestoreQuerys';
+import React, { useState, useEffect } from 'react';
+import { Text, View, Button, TextInput, FlatList, StyleSheet } from "react-native";
+import { createItem, deleteItem, getItems } from '@/lib/firestoreQuerys';
 import { Item, ItemData } from '@/lib/definitions';
 
-export default async function Index() {
-  // const [name, setName] = useState<string>('');
-  // const [qtd, setQtd] = useState<string>('0');
+export default function Index() {
+  const [name, setName] = useState<string>('');
+  const [qtd, setQtd] = useState<string>('');
+	const [items, setItems] = useState<Item[]>([]);
 
-  // const items: Item[] | null = await getItems();
+	async function loadItems() {
+		setItems(await getItems());
+	}
 
-  // async function saveItem() {
-  //   const itemData: ItemData = {
-  //     name: 'name',
-  //     qtd: 3,
-  //   };
+  async function saveItem() {
+    const itemData: ItemData = {
+      name: name,
+      qtd: parseInt(qtd),
+    };
 
-  //   await createItem(itemData);
-  // }
+    await createItem(itemData);
+		await loadItems();
+
+		setName('');
+		setQtd('');
+  }
+
+	async function removeItem(itemId: string) {
+		await deleteItem(itemId)
+		await loadItems();
+	}
+
+	useEffect(() => {
+		loadItems();
+	}, []);
 
   return (
-    <View
-      style={{
-        marginTop: 10,
-        flex: 1,
-        justifyContent: "flex-start",
-        alignItems: "flex-start",
-        gap: 10
-      }}
-    >
-      <View
-        style={{
-          flexDirection: 'row',
-          justifyContent: 'flex-start',
-          alignItems: 'center'
-        }}
-      >
-        <TextInput 
-          // onChangeText={setName}
-          value={'name'}
-          placeholder='NOME DO ITEM'
-        />
-        <TextInput 
-          // onChangeText={setQtd}
-          value={'qtd'}
-          keyboardType='numeric'
-        />
-
-      </View>
+    <View style={styles.container}>
+      <View style={styles.itemForm}>
+				<View style={styles.itemInputs}>
+					<TextInput 
+						style={styles.inputEntry}
+						onChangeText={setQtd}
+						value={qtd}
+						placeholder='QUANTIDADE'
+						keyboardType='numeric'
+					/>
+					<TextInput 
+						style={styles.inputEntry}
+						onChangeText={setName}
+						value={name}
+						placeholder='NOME DO ITEM'
+					/>
+				</View>
         <Button 
           title='SALVAR'
-          // onPress={saveItem}
+          onPress={saveItem}
         />
+      </View>
 
-        {/* <ScrollView>
-          {items && items.map(item => (
-            <Text key={item.id}>{item.qtd}x {item.name}</Text>
-          ))}
-        </ScrollView> */}
+        <View>
+					{items && (
+						<FlatList
+							data={items}
+							keyExtractor={({id}) => id}
+							renderItem={({item}) => (
+								<View style={styles.listEntry}>
+									<Text>
+										{item.qtd}x {item.name}
+									</Text>
+									<Button color='#650c1b' title='EXCLUIR' onPress={() => removeItem(item.id)}/>
+								</View>
+							)}
+						/>
+					)}
+				</View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+	container: {
+		flex: 1,
+		padding: 24,
+		gap: 24,
+		backgroundColor: 'white',
+		width: 'auto'
+	},
+	itemForm: {
+		flexDirection: 'row',
+		justifyContent: 'flex-start',
+		alignItems: 'center',
+		gap: 10
+	},
+	itemInputs: {
+		flexDirection: 'row',
+		gap: 10
+	},
+	inputEntry: {
+		borderColor: 'black',
+		borderWidth: 1,
+		borderRadius: 3
+	},
+	listEntry: {
+		flexDirection: 'row',
+		justifyContent: 'flex-start',
+		alignItems: 'center',
+		gap: 10,
+		marginVertical: 5
+	}
+});

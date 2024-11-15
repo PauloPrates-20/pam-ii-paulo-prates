@@ -38,7 +38,7 @@ export async function updateItem(item: Item) {
     }
 }
 
-export async function getItems(): Promise<Item[] | null> {
+export async function getItems(): Promise<Item[]> {
     const items: Item[] = [];
 
     try {
@@ -56,7 +56,6 @@ export async function getItems(): Promise<Item[] | null> {
         })
     } catch (error) {
         console.error('Não foi possível ler os items do banco de dados');
-        return null;
     }
 
     return items;
